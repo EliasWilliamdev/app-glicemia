@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function FormularioCadastral({ usuario }) {
+function FormularioCadastral({ usuario, onFinish }) {
   const [form, setForm] = useState({
     nomeCompleto: '',
     email: '',
@@ -38,8 +38,13 @@ function FormularioCadastral({ usuario }) {
       setMensagem('É necessário aceitar o consentimento.');
       return;
     }
+    const key = 'usuarios';
+    const usuarios = JSON.parse(localStorage.getItem(key) || '{}');
+    usuarios[form.email] = { senha: form.senha, nomeCompleto: form.nomeCompleto };
+    localStorage.setItem(key, JSON.stringify(usuarios));
     setMensagem('Cadastro completo realizado com sucesso!');
-    setTimeout(() => navigate('/registro'), 800);
+    if (onFinish) onFinish(form.email);
+    setTimeout(() => navigate('/registro'), 600);
   };
 
   return (

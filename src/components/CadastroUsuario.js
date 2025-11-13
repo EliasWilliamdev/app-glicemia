@@ -66,7 +66,7 @@ function CadastroUsuario({ onLogin }) {
   <h2 style={{ textAlign: 'center', marginBottom: 24, color: '#fff', letterSpacing: 1 }}>GlucCare</h2>
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <button type="button" onClick={() => setModo('entrar')} style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: modo === 'entrar' ? accentColor : 'rgba(255,255,255,0.15)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Entrar</button>
-        <button type="button" onClick={() => setModo('cadastrar')} style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: modo === 'cadastrar' ? accentColor : 'rgba(255,255,255,0.15)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Cadastrar</button>
+        <button type="button" onClick={() => { setModo('cadastrar'); navigate('/cadastro-completo'); }} style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: modo === 'cadastrar' ? accentColor : 'rgba(255,255,255,0.15)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Cadastrar</button>
       </div>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

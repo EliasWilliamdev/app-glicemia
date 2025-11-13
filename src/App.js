@@ -60,6 +60,9 @@ function App() {
             usuario ? <Navigate to="/registro" /> :
             <CadastroUsuario onLogin={user => setUsuario(user)} />
           } />
+          <Route path="/cadastro-completo" element={
+            <FormularioCadastral usuario={usuario} onFinish={user => setUsuario(user)} />
+          } />
           <Route path="/*" element={
             <PrivateRoute>
               <>
@@ -70,9 +73,6 @@ function App() {
                   } />
                   <Route path="grafico" element={
                     <GraficoGlicemia registros={registros} />
-                  } />
-                  <Route path="cadastro-completo" element={
-                    <FormularioCadastral usuario={usuario} />
                   } />
                   <Route path="mini-dieta" element={
                     <MiniDietaAutomatica ultimoValor={0} />
