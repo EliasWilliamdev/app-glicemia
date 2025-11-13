@@ -7,6 +7,7 @@ import ContatosEmergencia from './components/ContatosEmergencia';
 import GraficoGlicemia from './components/GraficoGlicemia';
 import MiniDietaAutomatica from './components/MiniDietaAutomatica';
 import RegistroGlicemia from './components/RegistroGlicemia';
+import FormularioCadastral from './components/FormularioCadastral';
 
 
 import { useNavigate } from 'react-router-dom';
@@ -69,6 +70,9 @@ function App() {
                   } />
                   <Route path="grafico" element={
                     <GraficoGlicemia registros={registros} />
+                  } />
+                  <Route path="cadastro-completo" element={
+                    <FormularioCadastral usuario={usuario} />
                   } />
                   <Route path="mini-dieta" element={
                     <MiniDietaAutomatica ultimoValor={0} />
