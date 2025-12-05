@@ -55,7 +55,7 @@ function gerarDieta(valorGlicemia) {
       risco: 'Baixa',
       secoes: [
         {
-          titulo: 'Primeiro socorro',
+          titulo: 'Socorro',
           itens: [
             '1 copo de suco (150 ml) OU',
             '1 colher de açúcar na água OU',
