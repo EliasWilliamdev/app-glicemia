@@ -61,11 +61,18 @@ function FormularioCadastral({ usuario, onFinish }) {
         setMensagem('Erro ao criar usuário: ' + signUpError.message);
         return;
       }
+      let userId = signUpData && signUpData.user ? signUpData.user.id : null;
       if (!signUpData || !signUpData.session) {
-        setMensagem('Cadastro iniciado. Confirme o e-mail e faça login para concluir.');
-        return;
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: form.email.trim().toLowerCase(),
+          password: form.senha
+        });
+        if (signInError) {
+          setMensagem('Erro ao entrar automaticamente: ' + signInError.message);
+          return;
+        }
+        userId = signInData && signInData.user ? signInData.user.id : userId;
       }
-      const userId = signUpData && signUpData.user ? signUpData.user.id : null;
       const { error: insertError } = await supabase.from('usuarios').insert([
         {
           user_id: userId,
