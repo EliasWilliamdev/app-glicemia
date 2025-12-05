@@ -6,6 +6,7 @@ import CadastroUsuario from './components/CadastroUsuario';
 import ContatosEmergencia from './components/ContatosEmergencia';
 import GraficoGlicemia from './components/GraficoGlicemia';
 import MiniDietaAutomatica from './components/MiniDietaAutomatica';
+import Dietas from './components/Dietas';
 import RegistroGlicemia from './components/RegistroGlicemia';
 import FormularioCadastral from './components/FormularioCadastral';
 import { supabase } from './supabaseClient';
@@ -29,6 +30,7 @@ function Menu({ onLogout }) {
       <Link to="/registro" style={{ color: '#fff', textDecoration: 'none', fontWeight: 600 }}>Registro</Link>
       <Link to="/grafico" style={{ color: '#fff', textDecoration: 'none', fontWeight: 600 }}>Gráfico</Link>
       <Link to="/mini-dieta" style={{ color: '#fff', textDecoration: 'none', fontWeight: 600 }}>Mini Dieta</Link>
+      <Link to="/dietas" style={{ color: '#fff', textDecoration: 'none', fontWeight: 600 }}>Dietas</Link>
       <Link to="/contatos" style={{ color: '#fff', textDecoration: 'none', fontWeight: 600 }}>Contatos Emergência</Link>
       <button
         onClick={() => { onLogout(); navigate('/'); }}
@@ -99,6 +101,7 @@ function App() {
                   <Route path="mini-dieta" element={
                     <MiniDietaAutomatica ultimoValor={0} />
                   } />
+                  <Route path="dietas" element={<Dietas />} />
                   <Route path="contatos" element={
                     <ContatosEmergencia usuario={usuario} risco={"-"} />
                   } />
