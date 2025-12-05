@@ -9,6 +9,15 @@ function CadastroUsuario({ onLogin }) {
   const [showSenha, setShowSenha] = useState(false);
   const navigate = useNavigate();
   const [modo, setModo] = useState('entrar');
+  // Verifica se já existe usuário cadastrado
+  React.useEffect(() => {
+    const usuarios = JSON.parse(localStorage.getItem('usuarios') || '{}');
+    if (Object.keys(usuarios).length > 0) {
+      setModo('entrar');
+    } else {
+      setModo('cadastrar');
+    }
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -20,14 +29,18 @@ function CadastroUsuario({ onLogin }) {
     const usuarios = JSON.parse(localStorage.getItem(key) || '{}');
     if (modo === 'cadastrar') {
       if (usuarios[login]) {
-        setMensagem('Usuário já existe.');
+        window.alert('Já existe um cadastro com esse usuário. Faça login.');
+        setMensagem('Usuário já existe. Faça login.');
+        setModo('entrar');
         return;
       }
       usuarios[login] = { senha };
       localStorage.setItem(key, JSON.stringify(usuarios));
-      setMensagem('Usuário cadastrado com sucesso!');
-      if (onLogin) onLogin(login);
-      navigate('/cadastro-completo');
+      setMensagem('Usuário cadastrado com sucesso! Faça login.');
+      setModo('entrar');
+      setLogin('');
+      setSenha('');
+      return;
     } else {
       if (!usuarios[login] || usuarios[login].senha !== senha) {
         setMensagem('Credenciais inválidas.');

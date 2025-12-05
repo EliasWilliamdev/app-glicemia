@@ -38,6 +38,8 @@ function Menu({ onLogout }) {
 }
 
 function App() {
+  // Verifica se já existe usuário cadastrado
+  const usuariosSalvos = JSON.parse(localStorage.getItem('usuarios') || '{}');
   const [usuario, setUsuario] = useState(null);
   const [registros, setRegistros] = useState([]);
 
@@ -58,7 +60,9 @@ function App() {
         <Routes>
           <Route path="/" element={
             usuario ? <Navigate to="/registro" /> :
-            <CadastroUsuario onLogin={user => setUsuario(user)} />
+            (Object.keys(usuariosSalvos).length > 0
+              ? <CadastroUsuario onLogin={user => setUsuario(user)} />
+              : <CadastroUsuario onLogin={user => setUsuario(user)} />)
           } />
           <Route path="/cadastro-completo" element={
             <FormularioCadastral usuario={usuario} onFinish={user => setUsuario(user)} />
