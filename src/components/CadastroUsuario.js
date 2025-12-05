@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
 
 function CadastroUsuario({ onLogin }) {
@@ -9,47 +10,44 @@ function CadastroUsuario({ onLogin }) {
   const [showSenha, setShowSenha] = useState(false);
   const navigate = useNavigate();
   const [modo, setModo] = useState('entrar');
-  // Verifica se já existe usuário cadastrado
+  const [isSubmitting, setIsSubmitting] = useState(false);
   React.useEffect(() => {
-    const usuarios = JSON.parse(localStorage.getItem('usuarios') || '{}');
-    if (Object.keys(usuarios).length > 0) {
-      setModo('entrar');
-    } else {
-      setModo('cadastrar');
-    }
+    setModo('entrar');
   }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!login || !senha) {
       setMensagem('Preencha todos os campos.');
       return;
     }
-    const key = 'usuarios';
-    const usuarios = JSON.parse(localStorage.getItem(key) || '{}');
     if (modo === 'cadastrar') {
-      if (usuarios[login]) {
-        window.alert('Já existe um cadastro com esse usuário. Faça login.');
-        setMensagem('Usuário já existe. Faça login.');
-        setModo('entrar');
-        return;
-      }
-      usuarios[login] = { senha };
-      localStorage.setItem(key, JSON.stringify(usuarios));
-      setMensagem('Usuário cadastrado com sucesso! Faça login.');
-      setModo('entrar');
-      setLogin('');
-      setSenha('');
+      navigate('/cadastro-completo');
       return;
-    } else {
-      if (!usuarios[login] || usuarios[login].senha !== senha) {
-        setMensagem('Credenciais inválidas.');
+    }
+    const doLogin = async () => {
+      setIsSubmitting(true);
+      const email = login.trim().toLowerCase();
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+      if (error) {
+        const msg = error.message || '';
+        if (msg.toLowerCase().includes('email not confirmed')) {
+          setMensagem('E-mail não confirmado. Verifique sua caixa de entrada.');
+        } else if (msg.toLowerCase().includes('invalid login credentials')) {
+          setMensagem('Credenciais inválidas. Verifique e tente novamente.');
+        } else {
+          setMensagem(msg);
+        }
+        setIsSubmitting(false);
         return;
       }
       setMensagem('Login realizado com sucesso!');
-      if (onLogin) onLogin(login);
+      if (onLogin) onLogin(data.user.email || email);
       navigate('/registro');
-    }
+      setIsSubmitting(false);
+    };
+    doLogin();
   };
 
   // Cores baseadas na imagem: vinho (#7a183a), branco, verde suave (#6dbf6d)
@@ -145,10 +143,39 @@ function CadastroUsuario({ onLogin }) {
             {showSenha ? 'Ocultar' : 'Mostrar'}
           </button>
         </div>
-        <button type="submit" style={{ marginTop: 8, padding: '12px', borderRadius: 8, border: 'none', background: accentColor, color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer', boxShadow: '0 2px 8px #0002', transition: 'background 0.2s, transform 0.1s' }} onMouseOver={e => e.target.style.background = mainColor} onMouseOut={e => e.target.style.background = accentColor} onMouseDown={e => e.target.style.transform = 'scale(0.97)'} onMouseUp={e => e.target.style.transform = 'scale(1)'}>
+        <button type="submit" disabled={isSubmitting} style={{ marginTop: 8, padding: '12px', borderRadius: 8, border: 'none', background: accentColor, color: '#fff', fontWeight: 700, fontSize: 16, cursor: isSubmitting ? 'not-allowed' : 'pointer', boxShadow: '0 2px 8px #0002', transition: 'background 0.2s, transform 0.1s', opacity: isSubmitting ? 0.7 : 1 }} onMouseOver={e => e.target.style.background = mainColor} onMouseOut={e => e.target.style.background = accentColor} onMouseDown={e => e.target.style.transform = 'scale(0.97)'} onMouseUp={e => e.target.style.transform = 'scale(1)'}>
           {modo === 'entrar' ? 'Entrar' : 'Cadastrar'}
         </button>
       </form>
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+        <button
+          type="button"
+          onClick={async () => {
+            const email = login.trim().toLowerCase();
+            if (!email) { setMensagem('Informe o e-mail para recuperar a senha.'); return; }
+            const { error } = await supabase.auth.resetPasswordForEmail(email);
+            if (error) { setMensagem(error.message); return; }
+            setMensagem('E-mail de recuperação enviado. Verifique sua caixa de entrada.');
+          }}
+          style={{ background: 'none', border: 'none', color: accentColor, cursor: 'pointer', fontWeight: 600 }}
+        >
+          Esqueci a senha
+        </button>
+        <span style={{ margin: '0 8px', color: '#fff' }}>|</span>
+        <button
+          type="button"
+          onClick={async () => {
+            const email = login.trim().toLowerCase();
+            if (!email) { setMensagem('Informe o e-mail para reenviar confirmação.'); return; }
+            const { error } = await supabase.auth.resend({ type: 'signup', email });
+            if (error) { setMensagem(error.message); return; }
+            setMensagem('E-mail de confirmação reenviado. Verifique sua caixa de entrada.');
+          }}
+          style={{ background: 'none', border: 'none', color: accentColor, cursor: 'pointer', fontWeight: 600 }}
+        >
+          Reenviar confirmação
+        </button>
+      </div>
       {mensagem && <p style={{ textAlign: 'center', marginTop: 18, color: '#fff', background: 'rgba(53,122,56,0.7)', borderRadius: 8, padding: 8 }}>{mensagem}</p>}
     </div>
   );

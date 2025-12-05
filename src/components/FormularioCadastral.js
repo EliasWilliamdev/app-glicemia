@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
 function FormularioCadastral({ usuario, onFinish }) {
@@ -21,6 +22,8 @@ function FormularioCadastral({ usuario, onFinish }) {
     consentimento: false,
   });
   const [mensagem, setMensagem] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastAttempt, setLastAttempt] = useState(0);
   const navigate = useNavigate();
   const mainColor = '#7a183a';
   const accentColor = '#6dbf6d';
@@ -28,23 +31,69 @@ function FormularioCadastral({ usuario, onFinish }) {
 
   const setField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    const now = Date.now();
+    if (now - lastAttempt < 60000) {
+      setMensagem('Aguarde 60 segundos antes de tentar novamente.');
+      return;
+    }
+    setIsSubmitting(true);
+    setLastAttempt(now);
     if (form.senha !== form.confirmarSenha) {
       setMensagem('Senhas não conferem.');
+      setIsSubmitting(false);
       return;
     }
     if (!form.consentimento) {
       setMensagem('É necessário aceitar o consentimento.');
+      setIsSubmitting(false);
       return;
     }
-    const key = 'usuarios';
-    const usuarios = JSON.parse(localStorage.getItem(key) || '{}');
-    usuarios[form.email] = { senha: form.senha, nomeCompleto: form.nomeCompleto };
-    localStorage.setItem(key, JSON.stringify(usuarios));
-    setMensagem('Cadastro completo realizado com sucesso!');
-    if (onFinish) onFinish(form.email);
-    setTimeout(() => navigate('/registro'), 600);
+    try {
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: form.email.trim().toLowerCase(),
+        password: form.senha,
+        options: { emailRedirectTo: window.location.origin }
+      });
+      if (signUpError) {
+        setMensagem('Erro ao criar usuário: ' + signUpError.message);
+        return;
+      }
+      if (!signUpData || !signUpData.session) {
+        setMensagem('Cadastro iniciado. Confirme o e-mail e faça login para concluir.');
+        return;
+      }
+      const userId = signUpData && signUpData.user ? signUpData.user.id : null;
+      const { error: insertError } = await supabase.from('usuarios').insert([
+        {
+          user_id: userId,
+          nome: form.nomeCompleto,
+          email: form.email,
+          telefone: form.telefone,
+          cpf: form.cpf,
+          nascimento: form.nascimento,
+          sexo: form.sexo,
+          cep: form.cep,
+          logradouro: form.logradouro,
+          numero: form.numero,
+          complemento: form.complemento,
+          bairro: form.bairro,
+          cidade: form.cidade,
+          estado: form.estado
+        }
+      ]);
+      if (insertError) {
+        setMensagem('Erro ao cadastrar: ' + insertError.message);
+        return;
+      }
+      setMensagem('Cadastro completo realizado com sucesso!');
+      if (onFinish) onFinish(form.email);
+      setTimeout(() => navigate('/registro'), 1000);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -134,7 +183,7 @@ function FormularioCadastral({ usuario, onFinish }) {
           <input id="consentimento" type="checkbox" checked={form.consentimento} onChange={e => setField('consentimento', e.target.checked)} />
           <label htmlFor="consentimento" style={{ color: '#fff' }}>Aceito o tratamento de dados conforme LGPD</label>
         </div>
-        <button type="submit" style={{ gridColumn: '1 / -1', marginTop: 8, padding: '12px', borderRadius: 8, border: 'none', background: accentColor, color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer', boxShadow: '0 2px 8px #0002', transition: 'background 0.2s, transform 0.1s' }} onMouseOver={e => e.target.style.background = mainColor} onMouseOut={e => e.target.style.background = accentColor} onMouseDown={e => e.target.style.transform = 'scale(0.97)'} onMouseUp={e => e.target.style.transform = 'scale(1)'}>
+        <button type="submit" disabled={isSubmitting} style={{ gridColumn: '1 / -1', marginTop: 8, padding: '12px', borderRadius: 8, border: 'none', background: accentColor, color: '#fff', fontWeight: 700, fontSize: 16, cursor: isSubmitting ? 'not-allowed' : 'pointer', boxShadow: '0 2px 8px #0002', transition: 'background 0.2s, transform 0.1s', opacity: isSubmitting ? 0.7 : 1 }} onMouseOver={e => e.target.style.background = mainColor} onMouseOut={e => e.target.style.background = accentColor} onMouseDown={e => e.target.style.transform = 'scale(0.97)'} onMouseUp={e => e.target.style.transform = 'scale(1)'}>
           Salvar Cadastro
         </button>
       </form>

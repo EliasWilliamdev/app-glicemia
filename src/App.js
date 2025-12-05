@@ -1,6 +1,6 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import CadastroUsuario from './components/CadastroUsuario';
 import ContatosEmergencia from './components/ContatosEmergencia';
@@ -8,6 +8,7 @@ import GraficoGlicemia from './components/GraficoGlicemia';
 import MiniDietaAutomatica from './components/MiniDietaAutomatica';
 import RegistroGlicemia from './components/RegistroGlicemia';
 import FormularioCadastral from './components/FormularioCadastral';
+import { supabase } from './supabaseClient';
 
 
 import { useNavigate } from 'react-router-dom';
@@ -38,13 +39,32 @@ function Menu({ onLogout }) {
 }
 
 function App() {
-  // Verifica se já existe usuário cadastrado
-  const usuariosSalvos = JSON.parse(localStorage.getItem('usuarios') || '{}');
   const [usuario, setUsuario] = useState(null);
   const [registros, setRegistros] = useState([]);
 
+  useEffect(() => {
+    const init = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data && data.session && data.session.user) {
+        setUsuario(data.session.user.email || data.session.user.id);
+      }
+    };
+    init();
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session && session.user) {
+        setUsuario(session.user.email || session.user.id);
+      } else {
+        setUsuario(null);
+      }
+    });
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
   // Função para logout
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setUsuario(null);
     setRegistros([]);
   };
@@ -60,9 +80,7 @@ function App() {
         <Routes>
           <Route path="/" element={
             usuario ? <Navigate to="/registro" /> :
-            (Object.keys(usuariosSalvos).length > 0
-              ? <CadastroUsuario onLogin={user => setUsuario(user)} />
-              : <CadastroUsuario onLogin={user => setUsuario(user)} />)
+            <CadastroUsuario onLogin={user => setUsuario(user)} />
           } />
           <Route path="/cadastro-completo" element={
             <FormularioCadastral usuario={usuario} onFinish={user => setUsuario(user)} />
